@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use IO::Uncompress::Unzip qw($UnzipError);
+use lib 'lib';
+use App::MorePub::Renderer;
+
+my $file = shift;
+
+my $u = IO::Uncompress::Unzip->new($file)
+  or die "Cannot open $file: $UnzipError";
+
+my %contents;
+my $status = 0;
+for ( $status = 1 ; $status > 0 ; $status = $u->nextStream() ) {
+    my $header = $u->getHeaderInfo();
+    my $buffer;
+    while ( ( $status = $u->read($buffer) > 0 ) ) {
+       $contents{ $header->{Name} } .= $buffer;
+	}
+}
+
+my $content = $contents{'Selfish_Reas-Have_More_Kids_split_119.html'};
+use Data::Dumper;
+warn join("\n", App::MorePub::Renderer::render($content));
+
+exit 0;
