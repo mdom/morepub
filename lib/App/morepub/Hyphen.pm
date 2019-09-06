@@ -1,4 +1,4 @@
-package App::termpub::Hyphen;
+package App::morepub::Hyphen;
 use Mojo::Base -base;
 use Mojo::File 'path';
 
@@ -38,7 +38,7 @@ has file => sub {
 };
 
 sub hypenation_available {
-	my ( $lang ) = @_;
+    my ($lang) = @_;
     return if !$self->dir;
     return if !$self->file;
     return 1;
