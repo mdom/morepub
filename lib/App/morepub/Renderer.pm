@@ -165,9 +165,6 @@ sub render {
             my $max = $columns - $column - $left_margin - 1;
 
             if ( $word_length > $max ) {
-
-                # next if !$preserve_whitespace && $word =~ /^\s+$/;
-
                 $buffer .= "\n";
                 $column = 0;
             }
