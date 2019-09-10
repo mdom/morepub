@@ -1,55 +1,75 @@
 #!/usr/bin/perl
 
 use Test::More;
-use Mojo::DOM;
-use App::MorePub::Renderer 'render';
+use App::morepub::Renderer 'render';
 
-my @tests;
+is( render('<body><i>foo</i></body>'), "foo" );
 
-push @tests, '<body><i>foo</i></body>', ["foo"];
+is( render('<body><div><p><i>foo</i></p></div></body>'), "foo" );
 
-push @tests, '<body><div><p><i>foo</p></div></body>', ["foo"];
+is(
+    render('<body><div></div><p><i>foo</i></p><p>bar</p><div /><p></p></body>'),
+    q{foo
 
-push @tests, '<body><div></div><p><i>foo</p><p>bar</p><div /><p></p></body>',
-  [ "foo", "", "bar" ];
+bar}
+);
 
-push @tests, q{
+is(
+    render(
+        q{
 <body><p>Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor incidunt ut labore et dolore magna aliqua.</p><p><span></span></p><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquid ex ea commodi consequat.</p></body>
-},
-  [
-"Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor",
-    "incidunt ut labore et dolore magna aliqua.",
-    "",
-"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut",
-    "aliquid ex ea commodi consequat.",
-  ];
+}
+    ),
+    q{Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor
+incidunt ut labore et dolore magna aliqua.
 
-push @tests, q{
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+aliquid ex ea commodi consequat.}
+);
+
+is(
+    render(
+        q{
 <body><p>foo</p><p> </p></body>
-}, ["foo"];
+}
+    ),
+    "foo"
+);
 
-push @tests, q{
+is(
+    render(
+        q{
 <body><span> </span><p>foo</p><p> </p><p> </p> <span> </span></body>
-}, ["foo"];
+}
+    ),
+    "foo"
+);
 
+is(
+    render(
+        q{
+<body><ul><li>foo</li><li>bar</li></ul></body>
+}
+    ),
+    q{  * foo
+  * bar}
+);
 
-push @tests, q{
-<body><ul><li>foo</li><li>bar</li><ul></body>
-}, [
-"  * foo",
-"  * bar"
-];
+is(
+    render(
+        q{
+<body><ul><li>Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor incidunt ut labore et dolore magna aliqua.</li><li>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquid ex ea commodi consequat.</li></ul></body>}
+    ),
+    q{  * Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod
+  tempor incidunt ut labore et dolore magna aliqua.
+  * Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
+  ut aliquid ex ea commodi consequat.}
+);
 
-push @tests, q{
-<body><ul><li>Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor incidunt ut labore et dolore magna aliqua.</li><li>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquid ex ea commodi consequat.</li></ul></body>}, [
-"  * Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod",
-"  tempor incidunt ut labore et dolore magna aliqua.",
-"  * Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi",
-"  ut aliquid ex ea commodi consequat.",
- ];
-
-push @tests, q
-{<body>
+is(
+    render(
+        q{
+<body>
   <ul>
     <li>foo</li>
 	<li>
@@ -60,41 +80,49 @@ push @tests, q
     </li>
   </ul>
 </body>
-}, [
-"  * foo",
-"  *",
-"    * bar",
-"    * quux",
-];
+}
+    ),
+    q{  * foo
+  *
+    * bar
+    * quux}
+);
 
-
-push @tests, q{
+is(
+    render(
+        q{
 <body><pre>if ($foo) {
   die;
 }
 </pre></body>
-}, [
-'if ($foo) {',
-'  die;',
-'}',
-];
+}
+    ),
+    q{if ($foo) {
+  die;
+}}
+);
 
-push @tests, q{
+is(
+    render(
+        q{
 <?xml version="1.0"?>
 <body>
   <ul>
     <li>A
-		<ul><li>B</li><li>C</li></ol>
+		<ul><li>B</li><li>C</li></ul>
   </li>
   </ul>
 </body>
-}, [
-"  * A",
-"    * B",
-"    * C",
-];
+}
+    ),
+    q{  * A
+    * B
+    * C}
+);
 
-push @tests, q{
+is(
+    render(
+        q{
 <body>
   <ol>
     <li>foo</li>
@@ -105,19 +133,16 @@ push @tests, q{
       </ol>
     </li>
     <li>foobar</li>
-  </ul>
+  </ol>
 </body>
-}, [
-'  1. foo',
-'  2.',
-'    1. bar',
-'    2. quux',
-'  3. foobar',
-];
-
-while ( my ( $input, $expected ) = splice( @tests, 0, 2 ) ) {
-    is_deeply( [ render($input) ], $expected );
 }
+    ),
+    q{  1. foo
+  2.
+    1. bar
+    2. quux
+  3. foobar}
+);
 
 done_testing;
 

@@ -1,113 +1,37 @@
 package App::morepub::Epub;
-use strict;
-use warnings;
-use parent 'Exporter';
-use IO::Uncompress::Unzip qw($UnzipError);
-use XML::Tiny 'parsefile';
+use Mojo::Base -base;
+use Mojo::DOM;
+use Mojo::URL;
+use Mojo::File;
+use Mojo::Util qw(decode encode html_unescape);
+use App::morepub::Epub::Chapter;
+use App::morepub::NavDoc;
+use App::morepub::Archive;
+use App::morepub::Renderer 'render';
 
-our @EXPORT_OK = qw(parsebook);
+has 'file';
 
-sub parsestring {
-    my ($string) = @_;
-    return parsefile( '_TINY_XML_STRING_' . $string );
-}
+has archive => sub {
+    App::morepub::Archive->new( file => shift->file );
+};
 
-sub find_node {
-    my ( $nodes, $sub ) = @_;
-    for my $node (@$nodes) {
-        if ( $sub->($node) ) {
-            return $node;
-        }
-        if ( ref( $node->{content} ) ) {
-            my $n = find_node( $node->{content}, $sub );
-            return $n if $n;
-        }
-    }
-    return;
-}
+has nav_doc => sub {
+    my $self = shift;
+    my $href = $self->root_dom->find('manifest item[properties="nav"]')
+      ->map( attr => 'href' )->first;
+    return if !$href;
+    return App::morepub::NavDoc->new(
+        href => Mojo::URL->new($href),
+        epub => $self,
+    );
+};
 
-sub read_archive {
-    my ($file) = @_;
-
-    my $u = IO::Uncompress::Unzip->new( $file, transparent => 0 )
-      or die "Cannot open $file: $UnzipError\n";
-
-    my %contents;
-    my $status;
-    for ( $status = 1 ; $status > 0 ; $status = $u->nextStream() ) {
-        my $header = $u->getHeaderInfo();
-        my $buffer;
-        while ( ( $status = $u->read($buffer) > 0 ) ) {
-            $contents{files}->{ $header->{Name} } .= $buffer;
-        }
-    }
-
-    die "Error processing $file: $!\n"
-      if $status < 0;
-
-    my $mimetype = $contents{files}->{'mimetype'};
-    $mimetype =~ s/[\r\n]+//;
-    if ( !$mimetype ) {
-        die "Missing mimetype for $file (is it an epub file?)\n";
-    }
-    if ( $mimetype ne 'application/epub+zip' ) {
-        die "Unknown mimetype $mimetype for $file (is it an epub file?)\n";
-    }
-    return \%contents;
-}
-
-sub parsebook {
-    my ($file)     = @_;
-    my $contents   = read_archive($file);
-    my $root_nodes = get_root_nodes($contents);
-
-}
-
-sub find_root_file {
-    my ( $contents, $node ) = @_;
-
-    my $root_file = find_node(
-        find_node( $node,
-            sub { $_[0]->{type} eq 'e' && $_[0]->{name} eq 'rootfiles' } )
-          ->{content},
-        sub {
-            $_[0]->{type} eq 'e' && $_[0]->{name} eq 'rootfile';
-        }
-    )->{attrib}->{'full-path'};
-    return $root_file;
-}
-
-sub get_root_nodes {
-    my ($contents)      = @_;
-    my $container       = $contents->{files}->{'META-INF/container.xml'};
-    my $container_nodes = parsestring($container);
-    my $root_file = find_root_file( $contents, $container_nodes );
-    return parsestring( $contents->{files}->{$root_file} );
-}
-
-# sub nav_doc {
-# my $nodes = shift;
-# for my $node (
-# find_node( $nodes,
-# sub { $_[0]->{type} eq 'e' && $_[0]->{name} eq 'manifest' } )->{
-# ->{
-# ;
-# ->map( attr => 'href' )->first;
-# return if !$href;
-# return App::termpub::NavDoc->new(
-# href => Mojo::URL->new($href),
-# epub => $self,
-# );
-# }
-# }
-
-sub toc {
+has toc => sub {
     my $self = shift;
 
     ## http://www.idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6
 
-    my $toc =
-      $self->root_dom->find('guide reference[type="toc"]')
+    my $toc = $self->root_dom->find('guide reference[type="toc"]')
       ->map( attr => 'href' )->map( sub { Mojo::URL->new($_) } )->first;
 
     ## http://www.idpf.org/epub/30/spec/epub30-publications.html#sec-item-elem
@@ -124,10 +48,11 @@ sub toc {
         my $ncx = $self->root_dom->find(
             'manifest item[media-type="application/x-dtbncx+xml"]')
           ->map( attr => 'href' )->first;
-        my $filename = $self->root_file->sibling($ncx)->to_rel->to_string;
-        use Mojo::Util;
-        my $root = Mojo::Util::decode 'UTF-8',
+        my $filename = $self->root_file->sibling($ncx)->to_rel->to_string,;
+        my $root     = Mojo::Util::decode 'UTF-8',
           $self->archive->contents($filename);
+        use Data::Dumper;
+        die "$root";
     }
 
     $toc->fragment(undef);
@@ -138,12 +63,11 @@ sub toc {
         }
     }
     return;
-}
+};
 
-sub start_chapter {
-    my $self = shift;
-    my $start_chapter =
-      $self->root_dom->find('guide reference[type="text"]')
+has start_chapter => sub {
+    my $self          = shift;
+    my $start_chapter = $self->root_dom->find('guide reference[type="text"]')
       ->map( attr => 'href' )->first;
 
     if ( !$start_chapter && $self->nav_doc ) {
@@ -160,9 +84,9 @@ sub start_chapter {
         }
     }
     return 0;
-}
+};
 
-sub chapters {
+has chapters => sub {
     my $self = shift;
     my @idrefs =
       $self->root_dom->find('spine itemref')->map( attr => 'idref' )->each;
@@ -170,9 +94,7 @@ sub chapters {
     my @chapters;
     for my $idref (@idrefs) {
         my $item = $self->root_dom->at(qq{manifest item[id="$idref"]});
-        next
-          if !$item
-          || $item->attr('media-type') ne 'application/xhtml+xml';
+        next if !$item || $item->attr('media-type') ne 'application/xhtml+xml';
         my $href = $item->attr('href');
         next if !$href;
 
@@ -186,7 +108,7 @@ sub chapters {
         }
 
         push @chapters,
-          App::termpub::Epub::Chapter->new(
+          App::morepub::Epub::Chapter->new(
             archive  => $self->archive,
             filename => $self->root_file->sibling($href)->to_rel->to_string,
             href     => $href,
@@ -194,9 +116,21 @@ sub chapters {
           );
     }
     return \@chapters;
-}
+};
 
-sub root_dom {
+has root_file => sub {
+    my $self          = shift;
+    my $filename      = $self->file;
+    my $container     = $self->archive->contents('META-INF/container.xml');
+    my $container_dom = Mojo::DOM->new($container);
+    my $root_file = $container_dom->at('rootfiles rootfile')->attr("full-path");
+    if ( !$root_file ) {
+        die "No root file defined for $filename\n";
+    }
+    return Mojo::File->new($root_file);
+};
+
+has root_dom => sub {
     my $self = shift;
     my $root = Mojo::Util::decode 'UTF-8',
       $self->archive->contents( $self->root_file->to_string );
@@ -206,27 +140,33 @@ sub root_dom {
           . $self->filename . "\n";
     }
     return Mojo::DOM->new($root);
-}
+};
 
-sub language {
+has language => sub {
     my $self = shift;
     return html_unescape(
-        eval { $self->root_dom->at('metadata')->at('dc\:language')->content; }
-    );
-}
+        eval { $self->root_dom->at('metadata')->at('dc\:language')->content } );
+};
 
-sub creator {
+has creator => sub {
     my $self = shift;
     return html_unescape(
-        eval { $self->root_dom->at('metadata')->at('dc\:creator')->content; }
+        eval { $self->root_dom->at('metadata')->at('dc\:creator')->content }
           || 'Unknown' );
-}
+};
 
-sub title {
+has title => sub {
     my $self = shift;
     return html_unescape(
-        eval { $self->root_dom->at('metadata')->at('dc\:title')->content; }
+        eval { $self->root_dom->at('metadata')->at('dc\:title')->content }
           || 'Unknown' );
+};
+
+sub render_book {
+    my ( $self, $fh ) = @_;
+    for my $chapter ( @{ $self->chapters } ) {
+        print $fh render( $chapter->content ), "\n\n";
+    }
 }
 
 1;

@@ -2,10 +2,13 @@
 
 use strict;
 use warnings;
-use lib 'lib';
-use App::morepub::Renderer 'render';
-use App::morepub::Epub 'parsebook';
+use FindBin '$Bin';
+use lib "$Bin/../lib";
+use App::morepub::Epub;
 
-parsebook($ARGV[0]);
+open(my $less, '|-', 'less' )
+	or die "Can't open less: $!\n";
+
+App::morepub::Epub->new( file => $ARGV[0])->render_book($less);
 
 exit 0;
