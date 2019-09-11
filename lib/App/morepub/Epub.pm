@@ -7,9 +7,10 @@ use Mojo::Util qw(decode encode html_unescape);
 use App::morepub::Epub::Chapter;
 use App::morepub::NavDoc;
 use App::morepub::Archive;
-use App::morepub::Renderer 'render';
+use App::morepub::Renderer;
 
 has 'file';
+has renderer => sub { App::morepub::Renderer->new };
 
 has archive => sub {
     App::morepub::Archive->new( file => shift->file );
@@ -165,7 +166,7 @@ has title => sub {
 sub render_book {
     my ( $self, $fh ) = @_;
     for my $chapter ( @{ $self->chapters } ) {
-        print $fh render( $chapter->content ), "\n\n";
+        print $fh $self->renderer->render( $chapter->content ), "\n\n";
     }
 }
 

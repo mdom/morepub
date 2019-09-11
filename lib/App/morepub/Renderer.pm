@@ -1,10 +1,11 @@
 package App::morepub::Renderer;
-use strict;
-use warnings;
+use Mojo::Base -base;
 use Mojo::DOM;
-use parent 'Exporter';
 
-our @EXPORT_OK = ('render');
+has columns => sub {
+    my $max_width = qx(tput cols);
+    return $max_width > 80 ? 80 : $max_width;
+};
 
 my $hyphenator;
 
@@ -49,7 +50,7 @@ sub nodes {
 }
 
 sub render {
-    my ($content) = @_;
+    my ( $self, $content ) = @_;
 
     my $dom    = Mojo::DOM->new($content)->at('body');
     my @events = nodes( $dom->child_nodes->each );
@@ -58,11 +59,9 @@ sub render {
 
     my $buffer = '';
 
-    my $max_width = qx(tput cols);
-
     my $left_margin         = 0;
     my $preserve_whitespace = 0;
-    my $columns             = $max_width > 80 ? 80 : $max_width;
+    my $columns             = $self->columns;
     my $column              = 0;
     my $pad                 = ' ';
     my $newline             = 1;
