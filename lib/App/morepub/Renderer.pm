@@ -160,7 +160,14 @@ sub render {
 
         for my $word (@words) {
 
-            my $word_length = () = $word =~ /\X/g;
+            my $word_length;
+
+			if ( $word =~ /[^[:ascii:]]/ ) {
+				$word_length = () = $word =~ /\X/g;
+			}
+			else {
+				$word_length = length $word;
+			}
 
             my $max = $columns - $column - $left_margin - 1;
 
