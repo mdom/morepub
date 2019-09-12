@@ -92,11 +92,14 @@ has chapters => sub {
     my @idrefs =
       $self->root_dom->find('spine itemref')->map( attr => 'idref' )->each;
 
+    my %items = map { ( $_->attr('id') => $_->attr('href') ) } @{
+        $self->root_dom->find(
+            qq{manifest item[id][href][media-type="application/xhtml+xml"})
+    };
+
     my @chapters;
     for my $idref (@idrefs) {
-        my $item = $self->root_dom->at(qq{manifest item[id="$idref"]});
-        next if !$item || $item->attr('media-type') ne 'application/xhtml+xml';
-        my $href = $item->attr('href');
+        my $href = $items{$idref};
         next if !$href;
 
         push @chapters,
