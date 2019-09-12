@@ -49,6 +49,8 @@ sub nodes {
     return @events;
 }
 
+has line => sub { 1 };
+
 sub render {
     my ( $self, $content ) = @_;
 
@@ -67,6 +69,7 @@ sub render {
     my $newline             = 1;
     my $buffered_newline    = 0;
     my $ol_stack            = [];
+    my $line                = $self->line;
 
     foreach my $event (@events) {
         my $key  = $event->[0];
@@ -86,17 +89,23 @@ sub render {
             $column += length $link;
         }
         elsif ( $key eq 'start_pre' ) {
+            $buffer .= "\n";
+            $line++;
             $preserve_whitespace = 1;
         }
         elsif ( $key eq 'end_pre' ) {
+            $buffer .= "\n";
+            $line++;
             $preserve_whitespace = 0;
         }
         elsif ( $key eq 'start_p' || $key eq 'start_div' ) {
             if ( $buffer !~ /\n\n\z/sm ) {
                 $buffer .= "\n\n";
+                $line += 2;
             }
             elsif ( $buffer !~ /\n\z/sm ) {
                 $buffer .= "\n";
+                $line += 1;
             }
             $column = 0;
         }
@@ -116,6 +125,7 @@ sub render {
         }
         elsif ( $key eq 'start_li' ) {
             $buffer .= "\n";
+            $line += 1;
             my $parent = $node->parent->tag;
 
             if ( $parent eq 'ul' ) {
@@ -134,9 +144,11 @@ sub render {
         elsif ( $key =~ /start_h(\d+)/ ) {
             $buffer .= "\n\n" . ( "=" x $1 ) . " ";
             $column = $1 + 1;
+            $line += 2;
         }
         elsif ( $key =~ /end_h(\d+)/ ) {
             $buffer .= "\n\n";
+            $line += 2;
             $column = 0;
         }
         elsif ( $key eq 'start_ol' ) {
@@ -173,6 +185,7 @@ sub render {
 
             if ( $word_length > $max ) {
                 $buffer .= "\n";
+                $line += 1;
                 $column = 0;
             }
 
@@ -191,6 +204,8 @@ sub render {
     $buffer =~ s/\A\n+//sm;
     $buffer =~ s/\n+\z//sm;
     $buffer =~ s/[ ]+$//gm;
+
+    $self->line( $self->line + $buffer =~ tr/\n/\n/ );
 
     return $buffer;
 }
