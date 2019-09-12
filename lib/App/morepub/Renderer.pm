@@ -148,14 +148,15 @@ sub render {
 
         next if $key ne 'start_text';
 
-        my @words = grep { $_ ne '' } split( /(\s+)/, $node->content );
+        if ($preserve_whitespace) {
+            $buffer .= $content;
+            $line += $content =~ tr/\n/\n/;
+            next;
+        }
 
-        if ( !$preserve_whitespace ) {
-            @words = map { s/\s+/ /; $_ } @words;
-        }
-        else {
-            @words = map { split /(\n)/ } @words;
-        }
+        $content =~ s/\s+/ /smg;
+
+        my @words = grep { $_ ne '' } split( /(\s)/, $content );
 
         for my $word (@words) {
 
@@ -175,14 +176,7 @@ sub render {
                 $column = 0;
             }
 
-            if ( $word eq "\n" ) {
-                $buffer .= "\n";
-                $column = 0;
-                next;
-            }
-
-            next
-              if !$preserve_whitespace && $column == 0 && $word =~ /^\s+$/;
+            next if $column == 0 && $word eq ' ';
 
             if ( $left_margin && $column == 0 ) {
                 $buffer .= $pad x $left_margin;
