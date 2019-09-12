@@ -1,7 +1,11 @@
 #!/usr/bin/perl
 
 use Test::More;
-use App::morepub::Renderer 'render';
+use App::morepub::Renderer;
+
+sub render {
+	App::morepub::Renderer->new->render(shift);
+}
 
 is( render('<body><i>foo</i></body>'), "foo" );
 
