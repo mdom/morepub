@@ -55,7 +55,7 @@ has targets => sub { {} };
 has links   => sub { [] };
 
 sub render {
-    my ( $self, $content ) = @_;
+    my ( $self, $content, $file ) = @_;
 
     my $dom    = Mojo::DOM->new($content)->at('body');
     my @events = nodes( $dom->child_nodes->each );
@@ -73,6 +73,9 @@ sub render {
     my $buffered_newline    = 0;
     my $ol_stack            = [];
     my $line                = $self->line;
+
+    $self->targets->{$file} = $line;
+    push @{ $self->links }, [ 'chapter', $file ];
 
     foreach my $event (@events) {
         my $key  = $event->[0];
