@@ -81,15 +81,6 @@ sub render {
         my $node = $event->[1];
         my $tag  = $event->[2];
 
-        elsif ( $key eq 'start_a' ) {
-            $buffer .= '[';
-            $column++;
-        }
-        elsif ( $key eq 'stop_a' ) {
-            my $link = '](' . $node->attr('href') . ')';
-            $buffer .= $link;
-            $column += length $link;
-        }
         if ( $node->type eq 'tag' && $node->attr('id') ) {
             $self->targets->{ $file . '#' . $node->attr('id') } = $line;
         }
@@ -104,6 +95,38 @@ sub render {
                 $line += 1;
             }
             $column = 0;
+        }
+
+        my $content;
+        if ( $key eq 'start_text' ) {
+            $content = $node->content;
+        }
+        elsif ( $key eq 'start_a' ) {
+            my $href = $node->attr('href');
+            next if !$href;
+
+            my $url = Mojo::URL->new($href);
+            next if $url->host;
+            next if $url->scheme;
+
+            my $path = $url->path;
+            my $target_name;
+
+            if ( $path->to_string ) {
+                $target_name =
+                  Mojo::File->new($file)->sibling($path)->to_rel->to_string;
+                if ( $url->fragment ) {
+                    $target_name .= '#' . $url->fragment;
+                }
+            }
+            elsif ( $url->fragment ) {
+                $target_name = Mojo::File->new($file)->to_rel->to_string . '#'
+                  . $url->fragment;
+            }
+
+            my $num = scalar @{ $self->links } + 1;
+            push @{ $self->links }, [ $num, $target_name ];
+            $content = "[$num]";
         }
         elsif ( $key eq 'start_pre' ) {
             $preserve_whitespace = 1;
