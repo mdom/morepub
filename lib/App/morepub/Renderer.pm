@@ -163,7 +163,7 @@ sub render {
             pop @$ol_stack;
         }
 
-        next if $key ne 'start_text';
+        next if not defined $content;
 
         if ($preserve_whitespace) {
             $buffer .= $content;
