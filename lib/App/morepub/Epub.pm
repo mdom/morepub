@@ -167,7 +167,7 @@ sub render_tags {
 sub render_book {
     my ( $self, $fh ) = @_;
     for my $chapter ( @{ $self->chapters } ) {
-        print $fh $self->renderer->render( $chapter->content ), "\n\n";
+        print $fh $self->renderer->render( $chapter->content );
     }
 }
 

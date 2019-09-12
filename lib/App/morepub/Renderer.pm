@@ -207,6 +207,7 @@ sub render {
     $buffer =~ s/\A\n+//sm;
     $buffer =~ s/\n+\z//sm;
     $buffer =~ s/[ ]+$//gm;
+    $buffer .= "\n\n";
 
     $self->line( $self->line + $buffer =~ tr/\n/\n/ );
 
