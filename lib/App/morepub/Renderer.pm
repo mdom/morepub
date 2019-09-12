@@ -51,6 +51,9 @@ sub nodes {
 
 has line => sub { 1 };
 
+has targets => sub { {} };
+has links   => sub { [] };
+
 sub render {
     my ( $self, $content ) = @_;
 
