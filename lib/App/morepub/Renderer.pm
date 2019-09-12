@@ -42,7 +42,7 @@ sub nodes {
             if ( my @childs = @{ $node->child_nodes } ) {
                 push @events, nodes(@childs);
             }
-            push @events, [ "end_$tag", $node ];
+            push @events, [ "end_$tag", $node, $tag ];
         }
     }
     return @events;
@@ -79,11 +79,8 @@ sub render {
     foreach my $event (@events) {
         my $key  = $event->[0];
         my $node = $event->[1];
+        my $tag  = $event->[2];
 
-        my $content;
-        if ( $key eq 'start_text' ) {
-            $content = $node->{content};
-        }
         elsif ( $key eq 'start_a' ) {
             $buffer .= '[';
             $column++;
@@ -93,17 +90,11 @@ sub render {
             $buffer .= $link;
             $column += length $link;
         }
-        elsif ( $key eq 'start_pre' ) {
-            $buffer .= "\n";
-            $line++;
-            $preserve_whitespace = 1;
+        if ( $node->type eq 'tag' && $node->attr('id') ) {
+            $self->targets->{ $file . '#' . $node->attr('id') } = $line;
         }
-        elsif ( $key eq 'end_pre' ) {
-            $buffer .= "\n";
-            $line++;
-            $preserve_whitespace = 0;
-        }
-        elsif ( $key eq 'start_p' || $key eq 'start_div' ) {
+
+        if ( $tag && $block{$tag} ) {
             if ( substr( $buffer, -2, 2 ) ne "\n\n" ) {
                 $buffer .= "\n\n";
                 $line += 2;
@@ -113,6 +104,12 @@ sub render {
                 $line += 1;
             }
             $column = 0;
+        }
+        elsif ( $key eq 'start_pre' ) {
+            $preserve_whitespace = 1;
+        }
+        elsif ( $key eq 'end_pre' ) {
+            $preserve_whitespace = 0;
         }
         elsif ( $key eq 'start_ol' ) {
             push @$ol_stack, 1;
@@ -147,14 +144,7 @@ sub render {
             }
         }
         elsif ( $key =~ /start_h(\d+)/ ) {
-            $buffer .= "\n\n" . ( "=" x $1 ) . " ";
-            $column = $1 + 1;
-            $line += 2;
-        }
-        elsif ( $key =~ /end_h(\d+)/ ) {
-            $buffer .= "\n\n";
-            $line += 2;
-            $column = 0;
+            $content = ( "=" x $1 ) . " ";
         }
         elsif ( $key eq 'start_ol' ) {
             push @$ol_stack, 1;
