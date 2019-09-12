@@ -32,19 +32,18 @@ my %block = map { $_ => 1 }
 sub nodes {
     my @events;
     for my $node (@_) {
-        my $type;
-        if ( $node->type eq 'tag' ) {
-            $type = $node->tag;
+        my $type = $node->type;
+        if ( $type eq 'text' ) {
+            push @events, [ 'start_text', $node ];
         }
-        elsif ( $node->type eq 'text' ) {
-            $type = 'text';
+        elsif ( $type eq 'tag' ) {
+            my $tag = $node->tag;
+            push @events, [ "start_$tag", $node ];
+            if ( my @childs = @{ $node->child_nodes } ) {
+                push @events, nodes(@childs);
+            }
+            push @events, [ "end_$tag", $node ];
         }
-        else {
-            next;
-        }
-        push @events, [ "start_$type", $node ],
-          nodes( $node->child_nodes->each ),
-          [ "stop_$type", $node ];
     }
     return @events;
 }
