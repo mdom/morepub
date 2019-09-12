@@ -99,11 +99,11 @@ sub render {
             $preserve_whitespace = 0;
         }
         elsif ( $key eq 'start_p' || $key eq 'start_div' ) {
-            if ( $buffer !~ /\n\n\z/sm ) {
+            if ( substr( $buffer, -2, 2 ) ne "\n\n" ) {
                 $buffer .= "\n\n";
                 $line += 2;
             }
-            elsif ( $buffer !~ /\n\z/sm ) {
+            elsif ( substr( $buffer, -1, 1 ) ne "\n" ) {
                 $buffer .= "\n";
                 $line += 1;
             }
