@@ -180,12 +180,12 @@ sub render {
 
             my $word_length;
 
-			if ( $word =~ /[^[:ascii:]]/ ) {
-				$word_length = () = $word =~ /\X/g;
-			}
-			else {
-				$word_length = length $word;
-			}
+            if ( $word =~ /[^[:ascii:]]/ ) {
+                $word_length = () = $word =~ /\X/g;
+            }
+            else {
+                $word_length = length $word;
+            }
 
             my $max = $columns - $column - $left_margin - 1;
 
