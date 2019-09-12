@@ -2,9 +2,7 @@ package App::morepub::Epub::Chapter;
 use Mojo::Base -base;
 
 has 'archive';
-has 'title';
 has 'filename';
-has 'href';
 has title => sub {
     shift->dom->find('title')->map('content')->first;
 };

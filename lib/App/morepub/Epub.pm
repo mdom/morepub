@@ -99,21 +99,10 @@ has chapters => sub {
         my $href = $item->attr('href');
         next if !$href;
 
-        my $title;
-        if ( $self->nav_doc ) {
-            my $text_node =
-              $self->nav_doc->find("a[href=$href]")->map('content')->first;
-            if ($text_node) {
-                $title = Mojo::DOM->new($text_node)->all_text;
-            }
-        }
-
         push @chapters,
           App::morepub::Epub::Chapter->new(
             archive  => $self->archive,
             filename => $self->root_file->sibling($href)->to_rel->to_string,
-            href     => $href,
-            $title ? ( title => $title ) : (),
           );
     }
     return \@chapters;
