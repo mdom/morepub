@@ -1,0 +1,17 @@
+#!/bin/sh
+
+cpanm -nl extlib Mojolicious
+
+PERL5LIB="extlib/lib/perl5/:$PERL5LIB" fatpack trace bin/morepub "$1"
+
+rm -Rf fatlib
+mkdir fatlib
+
+(
+cd extlib/lib/perl5/
+grep Mojo ../../../fatpacker.trace | cpio -pdm ../../../fatlib/ 
+)
+
+find fatlib -type f -print0 | xargs -0 perlstrip -s
+
+fatpack file bin/morepub > morepub.self-contained
