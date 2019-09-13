@@ -155,20 +155,16 @@ has title => sub {
           || 'Unknown' );
 };
 
-sub render_tags {
-    my ( $self, $fh, $filename ) = @_;
-    for my $obj ( @{ $self->renderer->links } ) {
-        if ( my $line = $self->renderer->targets->{ $obj->[1] } ) {
-            print {$fh} $obj->[0], "\t", $filename, "\t", $line, "\n";
-        }
-    }
-}
-
 sub render_book {
     my ( $self, $fh ) = @_;
     for my $chapter ( @{ $self->chapters } ) {
         print {$fh}
           $self->renderer->render( $chapter->content, $chapter->filename );
+    }
+    for my $obj ( @{ $self->renderer->links } ) {
+        if ( my $line = $self->renderer->targets->{ $obj->[1] } ) {
+            print {$fh} '[', $obj->[0], '] ', $line, "G\n";
+        }
     }
 }
 

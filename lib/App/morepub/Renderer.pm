@@ -74,7 +74,6 @@ sub render {
     my $line                = $self->line;
 
     $self->targets->{$file} = $line;
-    push @{ $self->links }, [ 'chapter', $file ];
 
     foreach my $event (@events) {
         my $key  = $event->[0];

@@ -4,26 +4,16 @@ use Mojo::Base -strict;
 use FindBin '$Bin';
 use lib "$Bin/../lib";
 use App::morepub::Epub;
-use Mojo::File 'tempdir', 'path';
 
 my $epub = shift;
 
 my $book = App::morepub::Epub->new( file => $epub );
 
 if ( -t STDOUT ) {
-    my $dir      = tempdir->make_path;
-    my $txt_file = $dir->child( path($epub)->basename );
-    open( my $fh, '>:encoding(UTF-8)', $txt_file );
-    $book->render_book($fh);
 
-    open( my $tag_fh, '>:encoding(UTF-8)', $dir->child('tags') )
-      or die "Can't open tags\n";
-    $book->render_tags( $tag_fh, "$txt_file" );
-
-    chdir("$dir");
-    system( 'less', $txt_file->basename ) == 0
-      or die "Can't open less: $!\n";
-    chdir("/");
+	open(my $fh, '|-', 'less')
+		or die "Can't open less: $!\n";
+    $book->render_book( $fh )
 }
 else {
     binmode( STDOUT, ":utf8" );
