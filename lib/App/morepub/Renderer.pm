@@ -154,7 +154,7 @@ sub render {
             $preserve_whitespace = 0;
         }
         elsif ( $key eq 'start_ol' ) {
-            push @$ol_stack, 1;
+            push @$ol_stack, 0;
             $left_margin += 2;
         }
         elsif ( $key eq 'start_ul' ) {
@@ -182,7 +182,7 @@ sub render {
                 $text_indent += 2;
             }
             elsif ( $parent eq 'ol' ) {
-                my $number = $ol_stack->[-1]++;
+                my $number = ++$ol_stack->[-1];
                 $buffer .= ( $pad x $left_margin ) . "$number. ";
                 $column = $left_margin + 2 + length($number);
                 $text_indent += length($number) + 2;
