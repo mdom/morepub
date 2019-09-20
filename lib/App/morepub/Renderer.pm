@@ -24,10 +24,10 @@ my %block = map { $_ => 1 }
   qw[address applet article aside audio blockquote body caption
   center colgroup datalist del dir div dd details dl dt
   fieldset figcaption figure footer form frameset h1 h2 h3
-  h4 h5 h6 head header hgroup hr html iframe ins legend li
+  h4 h5 h6 head header hgroup hr html iframe ins legend
   listing map marquee menu nav noembed noframes noscript
-  object ol optgroup option p pre select section source summary
-  table tbody td tfoot th thead title tr track ul video];
+  object optgroup option p pre select section source summary
+  table tbody td tfoot th thead title tr track video];
 
 sub nodes {
     my @events;
@@ -72,8 +72,21 @@ sub render {
     my $buffered_newline    = 0;
     my $ol_stack            = [];
     my $line                = $self->line;
+    my $in_list             = 0;
 
     $self->targets->{$file} = $line;
+
+    my $maybe_add_newlines = sub {
+        if ( substr( $buffer, -2, 2 ) ne "\n\n" ) {
+            $buffer .= "\n\n";
+            $line += 2;
+        }
+        elsif ( substr( $buffer, -1, 1 ) ne "\n" ) {
+            $buffer .= "\n";
+            $line += 1;
+        }
+        $column = 0;
+    };
 
     foreach my $event (@events) {
         my $key  = $event->[0];
@@ -85,15 +98,21 @@ sub render {
         }
 
         if ( $tag && $block{$tag} ) {
-            if ( substr( $buffer, -2, 2 ) ne "\n\n" ) {
+            $maybe_add_newlines->();
+        }
+
+        if ( $key eq 'start_ol' || $key eq 'start_ul' ) {
+            $maybe_add_newlines->() if !$in_list;
+            $in_list += 1;
+        }
+
+        if ( $key eq 'end_ol' || $key eq 'end_ul' ) {
+            $in_list -= 1;
+            if ( !$in_list ) {
                 $buffer .= "\n\n";
                 $line += 2;
+                $column = 0;
             }
-            elsif ( substr( $buffer, -1, 1 ) ne "\n" ) {
-                $buffer .= "\n";
-                $line += 1;
-            }
-            $column = 0;
         }
 
         my $content;
@@ -148,8 +167,12 @@ sub render {
             $left_margin -= 2;
         }
         elsif ( $key eq 'start_li' ) {
-            $buffer .= "\n";
-            $line += 1;
+            if ( substr( $buffer, -1, 1 ) ne "\n" ) {
+                $buffer .= "\n";
+                $line += 1;
+                $column = 0;
+            }
+
             my $parent = $node->parent->tag;
 
             if ( $parent eq 'ul' ) {
