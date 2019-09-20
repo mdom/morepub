@@ -1,0 +1,10 @@
+name="App-morepub"
+readme_from="script/morepub"
+abstract_from="script/morepub"
+authors_from="script/morepub"
+license="gpl_3"
+badges = ['travis', 'coveralls' ]
+tag_format="v%v"
+
+[ReleaseTest]
+MinimumVersion = false
