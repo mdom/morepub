@@ -62,6 +62,20 @@ is(
 is(
     render(
         q{
+<body><span>span</span><ul><li>foo</li><li>bar</li></ul><span>span2</span></body>
+}
+    ),
+    q{span
+
+  * foo
+  * bar
+
+span2}
+);
+
+is(
+    render(
+        q{
 <body><ul><li>Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor incidunt ut labore et dolore magna aliqua.</li><li>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquid ex ea commodi consequat.</li></ul></body>}
     ),
     q{  * Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod
