@@ -9,9 +9,9 @@ morepub - read epub as markdown
 
 # DESCRIPTION
 
-morepub is a basic epub reader, that converts the books xhtml files
-to a single markdown document. If the controlly tty is a temrinal the
-documentation is opened with _less(1)_ otherwise it's printed to stdout.
+morepub is a basic epub reader, that converts an epub to a single
+markdown document. If the controlly tty is a temrinal the documentation
+is opened with _less(1)_ otherwise it's printed to stdout.
 
 # COPYRIGHT AND LICENSE 
 
