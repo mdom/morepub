@@ -129,7 +129,7 @@ has root_dom => sub {
     if ( !$root ) {
         die "Missing root file "
           . $self->root_file . " for "
-          . $self->filename . "\n";
+          . $self->file . "\n";
     }
     return Mojo::DOM->new($root);
 };
