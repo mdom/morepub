@@ -125,8 +125,7 @@ has root_file => sub {
 
 has root_dom => sub {
     my $self = shift;
-    my $root = Mojo::Util::decode 'UTF-8',
-      $self->archive->contents( $self->root_file->to_string );
+    my $root = $self->archive->contents( $self->root_file->to_string );
     if ( !$root ) {
         die "Missing root file "
           . $self->root_file . " for "
