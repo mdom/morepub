@@ -157,9 +157,14 @@ has title => sub {
 
 sub render_book {
     my ( $self, $fh ) = @_;
-    for my $chapter ( @{ $self->chapters } ) {
+    my @chapters = @{ $self->chapters };
+    while ( my $chapter = shift @chapters ) {
         print {$fh} encode 'UTF-8',
           $self->renderer->render( $chapter->content, $chapter->filename );
+        if ( @chapters || @{ $self->renderer->links } ) {
+            print {$fh} "\n\n";
+            $self->renderer->line( $self->renderer->line + 2 );
+        }
     }
     for my $obj ( @{ $self->renderer->links } ) {
         if ( my $line = $self->renderer->targets->{ $obj->[1] } ) {
