@@ -201,7 +201,7 @@ sub render {
             }
             elsif ( $parent eq 'ol' ) {
                 my $number = $ol_stack->[-1];
-                $text_indent -= length("$number. ");
+                $text_indent -= length($number) + 2;
             }
             $skip_ws = 0;
         }
