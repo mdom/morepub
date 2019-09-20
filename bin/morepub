@@ -11,9 +11,9 @@ my $book = App::morepub::Epub->new( file => $epub );
 
 if ( -t STDOUT ) {
 
-	open(my $fh, '|-', 'less')
-		or die "Can't open less: $!\n";
-    $book->render_book( $fh )
+    open( my $fh, '|-', 'less' )
+      or die "Can't open less: $!\n";
+    $book->render_book($fh);
 }
 else {
     $book->render_book( \*STDOUT );
