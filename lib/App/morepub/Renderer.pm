@@ -234,7 +234,7 @@ sub render {
                 $word_length = length $word;
             }
 
-            my $max = $columns - $column - $left_margin - 1;
+            my $max = $columns - $column - $left_margin - $text_indent - 1;
 
             if ( $word_length > $max ) {
                 $buffer .= "\n";
@@ -246,7 +246,7 @@ sub render {
 
             if ( $left_margin && $column == 0 ) {
                 $buffer .= $pad x ( $left_margin + $text_indent );
-                $column += $left_margin;
+                $column += $left_margin + $text_indent;
             }
 
             $buffer .= $word;
