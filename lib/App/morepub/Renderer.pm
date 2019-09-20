@@ -74,6 +74,7 @@ sub render {
     my $line                = $self->line;
     my $in_list             = 0;
     my $text_indent         = 0;
+    my $skip_ws             = 0;
 
     $self->targets->{$file} = $line;
 
@@ -190,6 +191,8 @@ sub render {
             else {
                 die "Unknown parent $parent for start_li\n";
             }
+
+            $skip_ws = 1;
         }
         elsif ( $key eq 'end_li' ) {
             my $parent = $node->parent->tag;
@@ -200,6 +203,7 @@ sub render {
                 my $number = $ol_stack->[-1];
                 $text_indent -= length("$number. ");
             }
+            $skip_ws = 0;
         }
         elsif ( $key =~ /start_h(\d+)/ ) {
             $content = ( "=" x $1 ) . " ";
@@ -242,7 +246,7 @@ sub render {
                 $column = 0;
             }
 
-            next if $column == 0 && $word eq ' ';
+            next if ( $column == 0 || $skip_ws ) && $word eq ' ';
 
             if ( $left_margin && $column == 0 ) {
                 $buffer .= $pad x ( $left_margin + $text_indent );
@@ -251,6 +255,8 @@ sub render {
 
             $buffer .= $word;
             $column += length $word;
+
+            $skip_ws = 0;
         }
     }
 

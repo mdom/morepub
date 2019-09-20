@@ -62,6 +62,17 @@ is(
 is(
     render(
         q{
+<body><ul><li>
+foo</li><li>bar</li></ul></body>
+}
+    ),
+    q{  * foo
+  * bar}
+);
+
+is(
+    render(
+        q{
 <body><span>span</span><ul><li>foo</li><li>bar</li></ul><span>span2</span></body>
 }
     ),
