@@ -73,6 +73,7 @@ sub render {
     my $ol_stack            = [];
     my $line                = $self->line;
     my $in_list             = 0;
+    my $text_indent         = 0;
 
     $self->targets->{$file} = $line;
 
@@ -178,14 +179,26 @@ sub render {
             if ( $parent eq 'ul' ) {
                 $buffer .= ( $pad x $left_margin ) . '* ';
                 $column = $left_margin + 2;
+                $text_indent += 2;
             }
             elsif ( $parent eq 'ol' ) {
                 my $number = $ol_stack->[-1]++;
-                $buffer .= ( $pad x $left_margin ) . $number . '. ';
+                $buffer .= ( $pad x $left_margin ) . "$number. ";
                 $column = $left_margin + 2 + length($number);
+                $text_indent += length($number) + 2;
             }
             else {
                 die "Unknown parent $parent for start_li\n";
+            }
+        }
+        elsif ( $key eq 'end_li' ) {
+            my $parent = $node->parent->tag;
+            if ( $parent eq 'ul' ) {
+                $text_indent -= 2;
+            }
+            elsif ( $parent eq 'ol' ) {
+                my $number = $ol_stack->[-1];
+                $text_indent -= length("$number. ");
             }
         }
         elsif ( $key =~ /start_h(\d+)/ ) {
@@ -232,7 +245,7 @@ sub render {
             next if $column == 0 && $word eq ' ';
 
             if ( $left_margin && $column == 0 ) {
-                $buffer .= $pad x $left_margin;
+                $buffer .= $pad x ( $left_margin + $text_indent );
                 $column += $left_margin;
             }
 

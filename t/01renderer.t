@@ -79,9 +79,9 @@ is(
 <body><ul><li>Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor incidunt ut labore et dolore magna aliqua.</li><li>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquid ex ea commodi consequat.</li></ul></body>}
     ),
     q{  * Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod
-  tempor incidunt ut labore et dolore magna aliqua.
+    tempor incidunt ut labore et dolore magna aliqua.
   * Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-  ut aliquid ex ea commodi consequat.}
+    ut aliquid ex ea commodi consequat.}
 );
 
 is(
