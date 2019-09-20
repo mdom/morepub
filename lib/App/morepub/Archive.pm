@@ -1,6 +1,7 @@
 package App::morepub::Archive;
 use Mojo::Base -base;
 use IO::Uncompress::Unzip qw($UnzipError);
+use Mojo::Util 'decode';
 
 has 'file';
 has '_content' => sub {
@@ -36,7 +37,7 @@ has '_content' => sub {
 
 sub contents {
     my ( $self, $file ) = @_;
-    $self->_content->{$file};
+    decode 'UTF-8', $self->_content->{$file};
 }
 
 1;

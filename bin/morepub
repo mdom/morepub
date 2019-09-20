@@ -16,7 +16,6 @@ if ( -t STDOUT ) {
     $book->render_book( $fh )
 }
 else {
-    binmode( STDOUT, ":utf8" );
     $book->render_book( \*STDOUT );
 }
 

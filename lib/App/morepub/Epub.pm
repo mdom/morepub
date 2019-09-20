@@ -158,12 +158,13 @@ has title => sub {
 sub render_book {
     my ( $self, $fh ) = @_;
     for my $chapter ( @{ $self->chapters } ) {
-        print {$fh}
+        print {$fh} encode 'UTF-8',
           $self->renderer->render( $chapter->content, $chapter->filename );
     }
     for my $obj ( @{ $self->renderer->links } ) {
         if ( my $line = $self->renderer->targets->{ $obj->[1] } ) {
-            print {$fh} '[', $obj->[0], '] ', $line, "G\n";
+            print {$fh}
+              encode( 'UTF-8', '[' . $obj->[0] . '] ' . $line . "G\n" );
         }
     }
 }
