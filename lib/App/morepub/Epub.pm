@@ -4,13 +4,10 @@ use Mojo::DOM;
 use Mojo::URL;
 use Mojo::File;
 use Mojo::Util qw(decode encode html_unescape);
-use App::morepub::Epub::Chapter;
 use App::morepub::NavDoc;
 use App::morepub::Archive;
-use App::morepub::Renderer;
 
 has 'file';
-has renderer => sub { App::morepub::Renderer->new };
 
 has archive => sub {
     App::morepub::Archive->new( file => shift->file );
@@ -102,11 +99,7 @@ has chapters => sub {
         my $href = $items{$idref};
         next if !$href;
 
-        push @chapters,
-          App::morepub::Epub::Chapter->new(
-            archive  => $self->archive,
-            filename => $self->root_file->sibling($href)->to_rel->to_string,
-          );
+        push @chapters, $self->root_file->sibling($href)->to_rel->to_string;
     }
     return \@chapters;
 };
@@ -156,21 +149,55 @@ has title => sub {
 
 sub render_book {
     my ( $self, $fh ) = @_;
-    my @chapters = @{ $self->chapters };
-    while ( my $chapter = shift @chapters ) {
-        print {$fh} encode 'UTF-8',
-          $self->renderer->render( $chapter->content, $chapter->filename );
-        if ( @chapters || @{ $self->renderer->links } ) {
-            print {$fh} "\n\n";
-            $self->renderer->line( $self->renderer->line + 2 );
+    my $html = '';
+
+    for my $chapter_file ( @{ $self->chapters } ) {
+        my $marker = Mojo::DOM->new('<a />');
+        $marker->at('a')->attr( id => '{' . $chapter_file . '}-{}' );
+        $html .= $marker->to_string;
+        for my $node (
+            Mojo::DOM->new( $self->archive->contents($chapter_file) )
+            ->at('body')->child_nodes->each )
+        {
+            for my $node ( $node->find('[id]')->each ) {
+                $node->attr( id => '{'
+                      . $chapter_file . '}-{'
+                      . $node->attr('id')
+                      . '}' );
+            }
+
+            for my $node ( $node->find('[href]')->each ) {
+                my $href = $node->attr('href');
+                next if !$href;
+
+                my $url = Mojo::URL->new($href);
+                next if $url->host;
+                next if $url->scheme;
+
+                my $path     = $url->path;
+                my $fragment = $url->fragment;
+
+                if ($path) {
+                    $path =
+                      Mojo::File->new($chapter_file)->sibling($path)
+                      ->to_rel->to_string;
+                }
+
+                if ( $path && $fragment ) {
+                    $href = "#{$path}-{$fragment}";
+                }
+                elsif ($path) {
+                    $href = "#{$path}-{}";
+                }
+                elsif ($fragment) {
+                    $href = "#{}-{$path}";
+                }
+                $node->attr( href => $href );
+            }
+            $html .= $node->to_string;
         }
     }
-    for my $obj ( @{ $self->renderer->links } ) {
-        if ( my $line = $self->renderer->targets->{ $obj->[1] } ) {
-            print {$fh}
-              encode( 'UTF-8', '[' . $obj->[0] . '] ' . $line . "G\n" );
-        }
-    }
+    print {$fh} encode 'UTF-8', $html;
 }
 
 1;

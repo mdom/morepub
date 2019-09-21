@@ -1,5 +1,5 @@
 {
-   "abstract" : "read epub as markdown",
+   "abstract" : "minimal epub reader for the terminal",
    "author" : [
       "Mario Domgoergen C<< <mario@domgoergen.com> >> "
    ],

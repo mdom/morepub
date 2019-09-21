@@ -9,23 +9,23 @@ my $epub = shift;
 
 my $book = App::morepub::Epub->new( file => $epub );
 
-if ( -t STDOUT ) {
+my @args = ( 'lynx', '-stdin' );
 
-    open( my $fh, '|-', 'less' )
-      or die "Can't open less: $!\n";
-    $book->render_book($fh);
+if ( !-t STDOUT ) {
+    push @args, '-dump';
 }
-else {
-    $book->render_book( \*STDOUT );
-}
+
+open( my $fh, '|-', @args )
+  or die "Can't open less: $!\n";
+$book->render_book($fh);
 
 exit 0;
 
-__POD__
+__END__
 
 =head1 NAME
 
-morepub - read epub as markdown
+morepub - minimal epub reader for the terminal
 
 =head1 SYNOPSIS
 
@@ -33,9 +33,10 @@ morepub - read epub as markdown
 
 =head1 DESCRIPTION
 
-morepub is a basic epub reader, that converts an epub to a single
-markdown document. If the controlly tty is a temrinal the documentation
-is opened with I<less(1)> otherwise it's printed to stdout.
+morepub is a basic epub reader, that converts an epub to a single html
+document. If the controlly tty is a terminal the documentation is opened
+with I<lynx(1)> otherwise it's printed to stdout. All internal links are
+preserved.
 
 =head1 COPYRIGHT AND LICENSE 
 

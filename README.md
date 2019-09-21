@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/mdom/morepub.svg?branch=master)](https://travis-ci.org/mdom/morepub) [![Coverage Status](https://img.shields.io/coveralls/mdom/morepub/master.svg?style=flat)](https://coveralls.io/r/mdom/morepub?branch=master)
 # NAME
 
-morepub - read epub as markdown
+morepub - minimal epub reader for the terminal
 
 # SYNOPSIS
 
@@ -10,8 +10,8 @@ morepub - read epub as markdown
 # DESCRIPTION
 
 morepub is a basic epub reader, that converts an epub to a single
-markdown document. If the controlly tty is a temrinal the documentation
-is opened with _less(1)_ otherwise it's printed to stdout.
+html document. If the controlly tty is a terminal the documentation
+is opened with _lynx(1)_ otherwise it's printed to stdout.
 
 # COPYRIGHT AND LICENSE 
 
