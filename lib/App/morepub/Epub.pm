@@ -152,50 +152,37 @@ sub render_book {
     my $html = '';
 
     for my $chapter_file ( @{ $self->chapters } ) {
-        my $marker = Mojo::DOM->new('<a />');
-        $marker->at('a')->attr( id => '{' . $chapter_file . '}-{}' );
-        $html .= $marker->to_string;
-        for my $node (
-            Mojo::DOM->new( $self->archive->contents($chapter_file) )
-            ->at('body')->child_nodes->each )
-        {
-            for my $node ( $node->find('[id]')->each ) {
-                $node->attr( id => '{'
-                      . $chapter_file . '}-{'
-                      . $node->attr('id')
-                      . '}' );
-            }
+        $html .= Mojo::DOM->new_tag( 'a', id => '{' . $chapter_file . '}-{}' );
 
-            for my $node ( $node->find('[href]')->each ) {
-                my $href = $node->attr('href');
-                next if !$href;
+        my $dom =
+          Mojo::DOM->new( $self->archive->contents($chapter_file) )->at('body');
 
-                my $url = Mojo::URL->new($href);
-                next if $url->host;
-                next if $url->scheme;
-
-                my $path     = $url->path;
-                my $fragment = $url->fragment;
-
-                if ($path) {
-                    $path =
-                      Mojo::File->new($chapter_file)->sibling($path)
-                      ->to_rel->to_string;
-                }
-
-                if ( $path && $fragment ) {
-                    $href = "#{$path}-{$fragment}";
-                }
-                elsif ($path) {
-                    $href = "#{$path}-{}";
-                }
-                elsif ($fragment) {
-                    $href = "#{}-{$path}";
-                }
-                $node->attr( href => $href );
-            }
-            $html .= $node->to_string;
+        for my $node ( @{ $dom->find('[id]') } ) {
+            $node->attr(
+                id => '{' . $chapter_file . '}-{' . $node->attr('id') . '}' );
         }
+
+        for my $node ( @{ $dom->find('[href]') } ) {
+            my $href = $node->attr('href');
+            next if !$href;
+
+            my $url = Mojo::URL->new($href);
+            next if $url->host || $url->scheme;
+
+            my $path     = $url->path     || '';
+            my $fragment = $url->fragment || '';
+
+            next if !$path && !$fragment;
+
+            if ($path) {
+                $path =
+                  Mojo::File->new($chapter_file)->sibling($path)
+                  ->to_rel->to_string;
+            }
+
+            $node->attr( href => "#{$path}-{$fragment}" );
+        }
+        $html .= $dom->content;
     }
     print {$fh} encode 'UTF-8', $html;
 }
