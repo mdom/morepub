@@ -150,7 +150,18 @@ has title => sub {
 
 sub render_book {
     my ( $self, $fh ) = @_;
-    my $html = '';
+    my $language = $self->language;
+    my $title    = $self->title;
+    my $html     = <<"    EOF";
+		<!doctype html>
+
+		<html lang="$language">
+		<head>
+			<meta charset="utf-8">
+			<title>$title</title>
+		</head>
+		</body>
+    EOF
 
     for my $chapter_file ( @{ $self->chapters } ) {
         $html .= Mojo::DOM->new_tag( 'a', id => '{' . $chapter_file . '}-{}' );
@@ -185,6 +196,7 @@ sub render_book {
         }
         $html .= $dom->content;
     }
+    $html .= '</body></html>';
     print {$fh} encode 'UTF-8', $html;
 }
 
