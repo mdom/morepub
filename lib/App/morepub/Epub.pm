@@ -130,7 +130,8 @@ has root_dom => sub {
 has language => sub {
     my $self = shift;
     return html_unescape(
-        eval { $self->root_dom->at('metadata')->at('dc\:language')->content } );
+        eval { $self->root_dom->at('metadata')->at('dc\:language')->content }
+          || 'en' );
 };
 
 has creator => sub {
