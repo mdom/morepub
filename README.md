@@ -9,9 +9,11 @@ morepub - minimal epub reader for the terminal
 # DESCRIPTION
 
 morepub is a basic epub reader, that converts an epub to a single html
-document. If the controlly tty is a terminal the documentation is opened
-with _lynx(1)_ otherwise the generated html is printed to stdout. All
-internal links are preserved.
+document. If the controlly tty is a terminal the document is opened
+with _lynx(1)_ otherwise the generated html is printed to stdout.
+
+All internal links are rewritten and links to important sections of the
+epub file are added to the top of the document.
 
 # COPYRIGHT AND LICENSE 
 
