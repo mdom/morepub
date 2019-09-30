@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/mdom/morepub.svg?branch=master)](https://travis-ci.org/mdom/morepub) [![Coverage Status](https://img.shields.io/coveralls/mdom/morepub/master.svg?style=flat)](https://coveralls.io/r/mdom/morepub?branch=master)
 # NAME
 
 morepub - minimal epub reader for the terminal
