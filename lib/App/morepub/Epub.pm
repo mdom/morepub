@@ -160,7 +160,7 @@ sub render_book {
 			<meta charset="utf-8">
 			<title>$title</title>
 		</head>
-		</body>
+		<body>
     EOF
 
     for my $chapter_file ( @{ $self->chapters } ) {
