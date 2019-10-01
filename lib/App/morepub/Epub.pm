@@ -157,13 +157,18 @@ sub render_book {
 		<body>
     EOF
 
-    my $start = $self->start_chapter;
-    if ($start) {
-        $html .= Mojo::DOM->new_tag(
+    my $landmarks = '';
+
+    if ( my $start = $self->start_chapter ) {
+        $landmarks .= Mojo::DOM->new_tag(
             a => href => "#{$start}-{}",
             'Jump to bodymatter'
         );
-        $html .= '<br />';
+        $landmarks .= '<br />';
+    }
+
+    if ($landmarks) {
+        $html .= "<p>$landmarks</p>";
     }
 
     for my $chapter_file ( @{ $self->chapters } ) {
