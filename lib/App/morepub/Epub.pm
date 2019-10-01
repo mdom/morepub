@@ -44,12 +44,7 @@ has toc => sub {
 
     $toc->fragment(undef);
 
-    for ( my $i = 0 ; $i < @{ $self->chapters } ; $i++ ) {
-        if ( $self->chapters->[$i]->href eq $toc ) {
-            return $i;
-        }
-    }
-    return;
+    return normalize_filename( $self->root_file, $toc->path );
 };
 
 has start_chapter => sub {
@@ -163,6 +158,14 @@ sub render_book {
         $landmarks .= Mojo::DOM->new_tag(
             a => href => "#{$start}-{}",
             'Jump to bodymatter'
+        );
+        $landmarks .= '<br />';
+    }
+
+    if ( my $toc = $self->toc ) {
+        $landmarks .= Mojo::DOM->new_tag(
+            a => href => "#{$toc}-{}",
+            'Jump to table of contents'
         );
         $landmarks .= '<br />';
     }
