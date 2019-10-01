@@ -2,7 +2,7 @@ package App::morepub::Epub;
 use Mojo::Base -base;
 use Mojo::DOM;
 use Mojo::URL;
-use Mojo::File;
+use Mojo::File 'path';
 use Mojo::Util qw(decode encode html_unescape);
 use App::morepub::NavDoc;
 use App::morepub::Archive;
@@ -68,20 +68,20 @@ has start_chapter => sub {
     my $start_chapter = $self->root_dom->find('guide reference[type="text"]')
       ->map( attr => 'href' )->first;
 
-    if ( !$start_chapter && $self->nav_doc ) {
-        $start_chapter = $self->nav_doc->find(
-            'nav[epub\:type="landmarks"] a[epub\:type="bodymatter"]')
-          ->map( attr => 'href' )->first;
+    if ($start_chapter) {
+        return normalize_filename( $self->root_file, $start_chapter );
     }
 
-    return 0 if !$start_chapter;
-
-    for ( my $i = 0 ; $i < @{ $self->chapters } ; $i++ ) {
-        if ( $self->chapters->[$i]->href eq $start_chapter ) {
-            return $i;
+    if ( $self->nav_doc ) {
+        $start_chapter = $self->nav_doc->find(
+            'nav[epub\:type~="landmarks"] a[epub\:type~="bodymatter"]')
+          ->map( attr => 'href' )->first;
+        if ($start_chapter) {
+            return normalize_filename( $self->nav_doc->file, $start_chapter );
         }
     }
-    return 0;
+
+    return;
 };
 
 has chapters => sub {
@@ -148,6 +148,11 @@ has title => sub {
           || 'Unknown' );
 };
 
+sub normalize_filename {
+    my ( $base, $file ) = @_;
+    path($base)->sibling($file)->to_rel->to_string;
+}
+
 sub render_book {
     my ( $self, $fh ) = @_;
     my $language = $self->language;
@@ -162,6 +167,15 @@ sub render_book {
 		</head>
 		<body>
     EOF
+
+    my $start = $self->start_chapter;
+    if ($start) {
+        $html .= Mojo::DOM->new_tag(
+            a => href => "#{$start}-{}",
+            'Jump to bodymatter'
+        );
+        $html .= '<br />';
+    }
 
     for my $chapter_file ( @{ $self->chapters } ) {
         $html .= Mojo::DOM->new_tag( 'a', id => '{' . $chapter_file . '}-{}' );
