@@ -42,7 +42,7 @@ has toc => sub {
         $toc = $self->nav_doc->href;
     }
 
-    $toc->fragment(undef);
+    return if !$toc;
 
     return normalize_filename( $self->root_file, $toc->path );
 };
