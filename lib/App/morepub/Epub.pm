@@ -183,6 +183,8 @@ sub render_book {
         my $dom =
           Mojo::DOM->new( $self->archive->contents($chapter_file) )->at('body');
 
+        $dom->find('script')->map('remove');
+
         for my $node ( @{ $dom->find('[id]') } ) {
             $node->attr(
                 id => '{' . $chapter_file . '}-{' . $node->attr('id') . '}' );
