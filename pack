@@ -1,17 +1,21 @@
 #!/bin/sh
 
-cpanm -nl extlib Mojolicious
+set -e
 
-PERL5LIB="extlib/lib/perl5/:$PERL5LIB" fatpack trace script/morepub "$1"
+[ -d fatlib ] || mkdir fatlib
 
-rm -Rf fatlib
-mkdir fatlib
+rm -f morepub
 
-(
-cd extlib/lib/perl5/
-grep Mojo ../../../fatpacker.trace | cpio -pdm ../../../fatlib/ 
-)
-
+fatpack trace --to-stderr script/morepub 2>&1 |  grep ^Mojo | while read pkg;do
+	file="$(perldoc -l $pkg)"
+	dir="fatlib/$(dirname $(echo $pkg | sed 's/::/\//g'))"
+	mkdir -p "$dir"
+	cp $file "$dir"
+done
 find fatlib -type f -print0 | xargs -0 perlstrip -s
 
 fatpack file script/morepub > morepub
+
+chmod +x morepub
+
+rm -R fatlib
