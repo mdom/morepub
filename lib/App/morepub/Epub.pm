@@ -42,17 +42,6 @@ has toc => sub {
         $toc = $self->nav_doc->href;
     }
 
-    if ( !$toc ) {
-        my $ncx = $self->root_dom->find(
-            'manifest item[media-type="application/x-dtbncx+xml"]')
-          ->map( attr => 'href' )->first;
-        my $filename = $self->root_file->sibling($ncx)->to_rel->to_string,;
-        my $root     = Mojo::Util::decode 'UTF-8',
-          $self->archive->contents($filename);
-        use Data::Dumper;
-        die "$root";
-    }
-
     $toc->fragment(undef);
 
     for ( my $i = 0 ; $i < @{ $self->chapters } ; $i++ ) {
