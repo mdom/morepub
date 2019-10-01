@@ -24,6 +24,59 @@ has nav_doc => sub {
     );
 };
 
+sub render_ncx {
+    my ( $dom, $filename ) = @_;
+    my $result = '<ul>';
+    for my $point ( $dom->find('navPoint')->each ) {
+        $result .= _render_ncx( $point, $filename );
+    }
+    $result .= '</ul>';
+    return $result;
+
+}
+
+sub _render_ncx {
+    my ( $point, $filename ) = @_;
+    my $result = '<li>';
+    if ( my $src = $point->at('content')->attr('src') ) {
+        my $label    = $point->at('navLabel')->all_text || '';
+        my $src      = Mojo::URL->new($src);
+        my $path     = $src->path || '';
+        my $fragment = $src->fragment || '';
+
+        $result .= Mojo::DOM->new_tag(
+            'a',
+            href => '#{'
+              . normalize_filename( $filename, $path ) . '}-{'
+              . $fragment . '}',
+            $label
+        );
+    }
+    my @points = $point->find('navPoint')->each;
+    if (@points) {
+        $result .= '<ul>';
+        for my $point (@points) {
+            $result .= _render_ncx( $point, $filename );
+        }
+        $result .= '</ul>';
+    }
+    $result .= '</li>';
+    return $result;
+}
+
+has ncx => sub {
+    my $self = shift;
+    my $ncx  = $self->root_dom->find(
+        'manifest item[media-type="application/x-dtbncx+xml"]')
+      ->map( attr => 'href' )->first;
+    if ($ncx) {
+        my $filename = normalize_filename( $self->root_file, $ncx );
+        my $dom      = Mojo::DOM->new( $self->archive->contents($filename) );
+        return render_ncx( $dom, $filename );
+    }
+    return;
+};
+
 has toc => sub {
     my $self = shift;
 
@@ -48,8 +101,9 @@ has toc => sub {
 };
 
 has start_chapter => sub {
-    my $self          = shift;
-    my $start_chapter = $self->root_dom->find('guide reference[type="text"]')
+    my $self = shift;
+    my $start_chapter =
+      $self->root_dom->find('guide reference[type="text"]')
       ->map( attr => 'href' )->first;
 
     if ($start_chapter) {
@@ -169,6 +223,13 @@ sub render_book {
         );
         $landmarks .= '<br />';
     }
+    elsif ( $self->ncx ) {
+        $landmarks .= Mojo::DOM->new_tag(
+            a => href => "#{toc.ncx}-{}",
+            'Jump to table of contents'
+        );
+        $landmarks .= '<br />';
+    }
 
     if ($landmarks) {
         $html .= "<p>$landmarks</p>";
@@ -208,6 +269,9 @@ sub render_book {
             $node->attr( href => "#{$path}-{$fragment}" );
         }
         $html .= $dom->content;
+    }
+    if ( !$self->toc && $self->ncx ) {
+        $html .= Mojo::DOM->new_tag( 'a', id => '{toc.ncx}-{}' ) . $self->ncx;
     }
     $html .= '</body></html>';
     print {$fh} encode 'UTF-8', $html;
