@@ -3,7 +3,7 @@ use Mojo::Base -base;
 use Mojo::DOM;
 use Mojo::URL;
 use Mojo::File 'path';
-use Mojo::Util qw(decode encode html_unescape);
+use Mojo::Util qw(decode encode html_unescape url_unescape);
 use App::morepub::NavDoc;
 use App::morepub::Archive;
 
@@ -137,7 +137,8 @@ has chapters => sub {
         my $href = $items{$idref};
         next if !$href;
 
-        push @chapters, $self->root_file->sibling($href)->to_rel->to_string;
+        push @chapters,
+          url_unescape( $self->root_file->sibling($href)->to_rel->to_string );
     }
     return \@chapters;
 };
