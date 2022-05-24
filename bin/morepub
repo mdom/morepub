@@ -22,23 +22,23 @@ for ( $status = 1 ; $status > 0 ; $status = $u->nextStream() ) {
     while ( ( $status = $u->read($buffer) > 0 ) ) {
         $contents{ $header->{Name} } .= $buffer;
     }
+    next if $header->{Name} =~ m{/$};
     $contents{ $header->{Name} } = decode 'utf-8', $contents{ $header->{Name} };
 }
 
 die "Error processing $epub: $!\n"
   if $status < 0;
 
-my $container     = $contents{'META-INF/container.xml'};
-my $container_dom = Mojo::DOM->new($container);
-my $root_file     = $container_dom->at('rootfiles rootfile')->attr("full-path");
-if ( !$root_file ) {
-    die "No root file defined for $epub\n";
-}
+my $root_file = 'content.opf';
 
+if (! exists $contents{$root_file}) {
+    my $container = Mojo::DOM->new( $contents{'META-INF/container.xml'} );
+    $root_file = $container->at('rootfiles rootfile')->attr("full-path");
+}
 my $root = $contents{$root_file};
 
 if ( !$root ) {
-    die "Missing root file $root_file for $epub\n";
+    die "No root file found for $epub\n";
 }
 
 my $root_dom = Mojo::DOM->new($root);
