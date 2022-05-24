@@ -45,16 +45,14 @@ my $root_dom = Mojo::DOM->new($root);
 
 my @idrefs = $root_dom->find('spine itemref')->map( attr => 'idref' )->each;
 
-my %items = map { ( $_->attr('id') => $_->attr('href') ) } @{
-    $root_dom->find(
-        qq{manifest item[id][href][media-type="application/xhtml+xml"]})
-};
-
 my @chapters;
+my $base = Mojo::File->new($root_file);
 for my $idref (@idrefs) {
-    my $href = $items{$idref};
+    my $elt = $root_dom->at(qq{manifest item[id="$idref"]});
+    next if $elt->attr('media-type') ne 'application/xhtml+xml';
+
+    my $href = $elt->attr('href');
     next if !$href;
-    my $base = Mojo::File->new($root_file);
 
     push @chapters, url_unescape( $base->sibling($href)->to_rel->to_string );
 }
