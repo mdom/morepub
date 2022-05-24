@@ -9,10 +9,10 @@ use IO::Uncompress::Unzip qw($UnzipError);
 
 our $VERSION = '1.0';
 
-my $filename = shift;
+my $epub = shift;
 
-my $u = IO::Uncompress::Unzip->new( $filename, transparent => 0 )
-  or die "Cannot open $file: $UnzipError\n";
+my $u = IO::Uncompress::Unzip->new( $epub, transparent => 0 )
+  or die "Cannot open $epub: $UnzipError\n";
 
 my %contents;
 my $status;
@@ -25,20 +25,20 @@ for ( $status = 1 ; $status > 0 ; $status = $u->nextStream() ) {
     $contents{ $header->{Name} } = decode 'utf-8', $contents{ $header->{Name} };
 }
 
-die "Error processing $filename: $!\n"
+die "Error processing $epub: $!\n"
   if $status < 0;
 
 my $container     = $contents{'META-INF/container.xml'};
 my $container_dom = Mojo::DOM->new($container);
 my $root_file     = $container_dom->at('rootfiles rootfile')->attr("full-path");
 if ( !$root_file ) {
-    die "No root file defined for $filename\n";
+    die "No root file defined for $epub\n";
 }
 
-my $root = $contents{ $root_file };
+my $root = $contents{$root_file};
 
 if ( !$root ) {
-    die "Missing root file $root_file for $filename\n";
+    die "Missing root file $root_file for $epub\n";
 }
 
 my $root_dom = Mojo::DOM->new($root);
@@ -56,22 +56,16 @@ for my $idref (@idrefs) {
     next if !$href;
     my $base = Mojo::File->new($root_file);
 
-    push @chapters,
-      url_unescape( $base->sibling($href)->to_rel->to_string );
+    push @chapters, url_unescape( $base->sibling($href)->to_rel->to_string );
 }
 
 my $language =
   html_unescape( eval { $root_dom->at('metadata')->at('dc\:language')->content }
       || 'en' );
 
-my $title = html_unescape(
-    eval { $self->root_dom->at('metadata')->at('dc\:title')->content }
+my $title =
+  html_unescape( eval { $root_dom->at('metadata')->at('dc\:title')->content }
       || 'Unknown' );
-
-sub normalize_filename {
-    my ( $base, $file ) = @_;
-    path($base)->sibling($file)->to_rel->to_string;
-}
 
 my $html = <<"EOF";
     <!doctype html>
@@ -122,7 +116,7 @@ $html .= '</body></html>';
 
 my $fh;
 if ( -t STDOUT ) {
-    open( $fh, '|-', 'lynx', '-stdin')
+    open( $fh, '|-', 'lynx', '-stdin' )
       or die "Can't open less: $!\n";
 }
 else {
