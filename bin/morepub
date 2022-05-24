@@ -1,0 +1,165 @@
+#!/usr/bin/perl
+
+use Mojo::Base -strict;
+use Mojo::DOM;
+use Mojo::URL;
+use Mojo::File 'path';
+use Mojo::Util qw(decode encode html_unescape url_unescape);
+use IO::Uncompress::Unzip qw($UnzipError);
+
+our $VERSION = '1.0';
+
+my $filename = shift;
+
+my $u = IO::Uncompress::Unzip->new( $filename, transparent => 0 )
+  or die "Cannot open $file: $UnzipError\n";
+
+my %contents;
+my $status;
+for ( $status = 1 ; $status > 0 ; $status = $u->nextStream() ) {
+    my $header = $u->getHeaderInfo();
+    my $buffer;
+    while ( ( $status = $u->read($buffer) > 0 ) ) {
+        $contents{ $header->{Name} } .= $buffer;
+    }
+    $contents{ $header->{Name} } = decode 'utf-8', $contents{ $header->{Name} };
+}
+
+die "Error processing $filename: $!\n"
+  if $status < 0;
+
+my $container     = $contents{'META-INF/container.xml'};
+my $container_dom = Mojo::DOM->new($container);
+my $root_file     = $container_dom->at('rootfiles rootfile')->attr("full-path");
+if ( !$root_file ) {
+    die "No root file defined for $filename\n";
+}
+
+my $root = $contents{ $root_file };
+
+if ( !$root ) {
+    die "Missing root file $root_file for $filename\n";
+}
+
+my $root_dom = Mojo::DOM->new($root);
+
+my @idrefs = $root_dom->find('spine itemref')->map( attr => 'idref' )->each;
+
+my %items = map { ( $_->attr('id') => $_->attr('href') ) } @{
+    $root_dom->find(
+        qq{manifest item[id][href][media-type="application/xhtml+xml"]})
+};
+
+my @chapters;
+for my $idref (@idrefs) {
+    my $href = $items{$idref};
+    next if !$href;
+    my $base = Mojo::File->new($root_file);
+
+    push @chapters,
+      url_unescape( $base->sibling($href)->to_rel->to_string );
+}
+
+my $language =
+  html_unescape( eval { $root_dom->at('metadata')->at('dc\:language')->content }
+      || 'en' );
+
+my $title = html_unescape(
+    eval { $self->root_dom->at('metadata')->at('dc\:title')->content }
+      || 'Unknown' );
+
+sub normalize_filename {
+    my ( $base, $file ) = @_;
+    path($base)->sibling($file)->to_rel->to_string;
+}
+
+my $html = <<"EOF";
+    <!doctype html>
+
+    <html lang="$language">
+    <head>
+        <meta charset="utf-8">
+        <title>$title</title>
+    </head>
+    <body>
+EOF
+
+for my $chapter_file (@chapters) {
+    $html .= Mojo::DOM->new_tag( 'a', id => '{' . $chapter_file . '}-{}' );
+
+    my $dom =
+      Mojo::DOM->new( $contents{$chapter_file} )->at('body');
+
+    $dom->find('script')->map('remove');
+
+    for my $node ( @{ $dom->find('[id]') } ) {
+        $node->attr(
+            id => '{' . $chapter_file . '}-{' . $node->attr('id') . '}' );
+    }
+
+    for my $node ( @{ $dom->find('[href]') } ) {
+        my $href = $node->attr('href');
+        next if !$href;
+
+        my $url = Mojo::URL->new($href);
+        next if $url->host || $url->scheme;
+
+        my $path     = $url->path     || '';
+        my $fragment = $url->fragment || '';
+
+        next if !$path && !$fragment;
+
+        if ($path) {
+            $path =
+              Mojo::File->new($chapter_file)->sibling($path)->to_rel->to_string;
+        }
+
+        $node->attr( href => "#{$path}-{$fragment}" );
+    }
+    $html .= $dom->content;
+}
+$html .= '</body></html>';
+
+my $fh;
+if ( -t STDOUT ) {
+    open( $fh, '|-', 'lynx', '-stdin')
+      or die "Can't open less: $!\n";
+}
+else {
+    $fh = \*STDOUT;
+}
+print {$fh} encode 'UTF-8', $html;
+
+=head1 NAME
+
+morepub - minimal epub reader for the terminal
+
+=head1 SYNOPSIS
+
+  morepub EPUB_FILE
+
+=head1 DESCRIPTION
+
+morepub is a basic epub reader, that converts an epub to a single html
+document. If the controlly tty is a terminal the document is opened
+with I<lynx(1)> otherwise the generated html is printed to stdout.
+
+=head1 COPYRIGHT AND LICENSE 
+
+Copyright 2019 Mario Domgoergen C<< <mario@domgoergen.com> >> 
+
+This program is free software: you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version. 
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details. 
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+
+=cut
+
