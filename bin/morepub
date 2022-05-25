@@ -16,14 +16,16 @@ my $u = IO::Uncompress::Unzip->new( $epub, transparent => 0 )
 
 my %contents;
 my $status;
-for ( $status = 1 ; $status > 0 ; $status = $u->nextStream() ) {
-    my $header = $u->getHeaderInfo();
+for ( $status = 1 ; $status > 0 ; $status = $u->nextStream ) {
+    my $filename = $u->getHeaderInfo->{Name};
     my $buffer;
     while ( ( $status = $u->read($buffer) > 0 ) ) {
-        $contents{ $header->{Name} } .= $buffer;
+        $contents{$filename} .= $buffer;
     }
-    next if $header->{Name} =~ m{/$};
-    $contents{ $header->{Name} } = decode 'utf-8', $contents{ $header->{Name} };
+}
+
+sub content {
+    decode 'utf-8', $contents{ $_[0] };
 }
 
 die "Error processing $epub: $!\n"
@@ -31,11 +33,11 @@ die "Error processing $epub: $!\n"
 
 my $root_file = 'content.opf';
 
-if (! exists $contents{$root_file}) {
-    my $container = Mojo::DOM->new( $contents{'META-INF/container.xml'} );
+if ( !exists $contents{$root_file} ) {
+    my $container = Mojo::DOM->new( content('META-INF/container.xml') );
     $root_file = $container->at('rootfiles rootfile')->attr("full-path");
 }
-my $root = $contents{$root_file};
+my $root = content($root_file);
 
 if ( !$root ) {
     die "No root file found for $epub\n";
@@ -80,7 +82,7 @@ for my $chapter_file (@chapters) {
     $html .= Mojo::DOM->new_tag( 'a', id => '{' . $chapter_file . '}-{}' );
 
     my $dom =
-      Mojo::DOM->new( $contents{$chapter_file} )->at('body');
+      Mojo::DOM->new( content($chapter_file) )->at('body');
 
     $dom->find('script')->map('remove');
 
