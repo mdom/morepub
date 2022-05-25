@@ -114,9 +114,11 @@ for my $chapter_file (@chapters) {
 }
 $html .= '</body></html>';
 
+my $cmd = $ENV{MOREPUB_CMD} || 'lynx -stdin';
+
 my $fh;
 if ( -t STDOUT ) {
-    open( $fh, '|-', 'lynx', '-stdin' )
+    open( $fh, '|-', $cmd )
       or die "Can't open less: $!\n";
 }
 else {
@@ -135,8 +137,20 @@ morepub - minimal epub reader for the terminal
 =head1 DESCRIPTION
 
 morepub is a basic epub reader, that converts an epub to a single html
-document. If the controlly tty is a terminal the document is opened
+document. If stdin is connected to a tty the document is opened
 with I<lynx(1)> otherwise the generated html is printed to stdout.
+
+=head1 ENVIRONMENT
+
+=over 4
+
+=item MOREPUB_CMD
+
+Command to call if morepub is not part of a pipeline. Defaults to 'lynx
+-stdin'. Another nice command would be 'lynx -stdin -dump -nolist |
+less'.
+
+=back
 
 =head1 COPYRIGHT AND LICENSE 
 

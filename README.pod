@@ -1,20 +1,32 @@
-# NAME
+=head1 NAME
 
 morepub - minimal epub reader for the terminal
 
-# SYNOPSIS
+=head1 SYNOPSIS
 
-    morepub EPUB_FILE
+  morepub EPUB_FILE
 
-# DESCRIPTION
+=head1 DESCRIPTION
 
 morepub is a basic epub reader, that converts an epub to a single html
-document. If the controlly tty is a terminal the document is opened
-with _lynx(1)_ otherwise the generated html is printed to stdout.
+document. If stdin is connected to a tty the document is opened
+with I<lynx(1)> otherwise the generated html is printed to stdout.
 
-# COPYRIGHT AND LICENSE 
+=head1 ENVIRONMENT
 
-Copyright 2019 Mario Domgoergen `<mario@domgoergen.com>` 
+=over 4
+
+=item MOREPUB_CMD
+
+Command to call if morepub is not part of a pipeline. Defaults to 'lynx
+-stdin'. Another nice command would be 'lynx -stdin -dump -nolist |
+less'.
+
+=back
+
+=head1 COPYRIGHT AND LICENSE 
+
+Copyright 2019 Mario Domgoergen C<< <mario@domgoergen.com> >> 
 
 This program is free software: you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
@@ -27,4 +39,5 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. 
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see &lt;http://www.gnu.org/licenses/>. 
+along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+
