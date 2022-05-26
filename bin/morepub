@@ -48,7 +48,7 @@ my $root_dom = Mojo::DOM->new($root);
 my @idrefs = $root_dom->find('spine itemref')->map( attr => 'idref' )->each;
 
 my @chapters;
-my $base = Mojo::File->new($root_file);
+my $base = path($root_file);
 for my $idref (@idrefs) {
     my $elt = $root_dom->at(qq{manifest item[id="$idref"]});
     next if $elt->attr('media-type') ne 'application/xhtml+xml';
@@ -104,8 +104,7 @@ for my $chapter_file (@chapters) {
         next if !$path && !$fragment;
 
         if ($path) {
-            $path =
-              Mojo::File->new($chapter_file)->sibling($path)->to_rel->to_string;
+            $path = path($chapter_file)->sibling($path)->to_rel->to_string;
         }
 
         $node->attr( href => "#{$path}-{$fragment}" );
