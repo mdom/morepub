@@ -68,10 +68,13 @@ my $title =
   html_unescape( eval { $root_dom->at('metadata')->at('dc\:title')->content }
       || 'Unknown' );
 
-my $fh = \*STDOUT;
+my $fh;
 if ( -t STDOUT ) {
     my $cmd = $ENV{MOREPUB_CMD} || 'lynx -stdin';
     open( $fh, '|-', $cmd ) or die "Can't open <$cmd>: $!\n";
+}
+else {
+    $fh = \*STDOUT;
 }
 
 print {$fh} <<"EOF";
@@ -86,6 +89,7 @@ print {$fh} <<"EOF";
 EOF
 
 for my $chapter_file (@chapters) {
+    print {$fh} Mojo::DOM->new_tag( 'a', id => "{$chapter_file}-{}" );
     my $dom = Mojo::DOM->new( content($chapter_file) )->at('body');
 
     $dom->find('script')->map('remove');
