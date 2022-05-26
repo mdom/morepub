@@ -13,7 +13,7 @@ our $VERSION = '1.0';
 my $epub = shift;
 
 my $u = IO::Uncompress::Unzip->new( $epub, transparent => 0 )
-  or die "Cannot open $epub: $UnzipError\n";
+  or die "$UnzipError\n";
 
 my %contents;
 my $status;
