@@ -91,8 +91,8 @@ for my $chapter_file (@chapters) {
     $dom->find('script')->map('remove');
 
     for my $node ( @{ $dom->find('[id]') } ) {
-        $node->attr(
-            id => '{' . $chapter_file . '}-{' . $node->attr('id') . '}' );
+        my $id = $node->attr('id');
+        $node->attr( id => "{$chapter_file}-{$id}" );
     }
 
     for my $node ( @{ $dom->find('[href]') } ) {
@@ -128,8 +128,8 @@ morepub - minimal epub reader for the terminal
 =head1 DESCRIPTION
 
 morepub is a basic epub reader, that converts an epub to a single html
-document. If stdin is connected to a tty the document is opened
-with I<lynx(1)> otherwise the generated html is printed to stdout.
+document. If stdin is connected to a tty the document is opened with
+I<lynx(1)> otherwise the generated html is printed to stdout.
 
 =head1 ENVIRONMENT
 
@@ -161,4 +161,3 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
 =cut
-
