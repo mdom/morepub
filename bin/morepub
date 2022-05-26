@@ -4,8 +4,9 @@ use Mojo::Base -strict;
 use Mojo::DOM;
 use Mojo::URL;
 use Mojo::File 'path';
-use Mojo::Util qw(decode encode html_unescape url_unescape);
+use Mojo::Util qw(decode html_unescape url_unescape);
 use IO::Uncompress::Unzip qw($UnzipError);
+use open qw/:std :utf8/;
 
 our $VERSION = '1.0';
 
@@ -67,7 +68,13 @@ my $title =
   html_unescape( eval { $root_dom->at('metadata')->at('dc\:title')->content }
       || 'Unknown' );
 
-my $html = <<"EOF";
+my $fh = \*STDOUT;
+if ( -t STDOUT ) {
+    my $cmd = $ENV{MOREPUB_CMD} || 'lynx -stdin';
+    open( $fh, '|-', $cmd ) or die "Can't open <$cmd>: $!\n";
+}
+
+print {$fh} <<"EOF";
     <!doctype html>
 
     <html lang="$language">
@@ -109,21 +116,9 @@ for my $chapter_file (@chapters) {
 
         $node->attr( href => "#{$path}-{$fragment}" );
     }
-    $html .= $dom->content;
+    print {$fh} $dom->content;
 }
-$html .= '</body></html>';
-
-my $cmd = $ENV{MOREPUB_CMD} || 'lynx -stdin';
-
-my $fh;
-if ( -t STDOUT ) {
-    open( $fh, '|-', $cmd )
-      or die "Can't open less: $!\n";
-}
-else {
-    $fh = \*STDOUT;
-}
-print {$fh} encode 'UTF-8', $html;
+print {$fh} '</body></html>';
 
 =head1 NAME
 
