@@ -86,10 +86,7 @@ print {$fh} <<"EOF";
 EOF
 
 for my $chapter_file (@chapters) {
-    $html .= Mojo::DOM->new_tag( 'a', id => '{' . $chapter_file . '}-{}' );
-
-    my $dom =
-      Mojo::DOM->new( content($chapter_file) )->at('body');
+    my $dom = Mojo::DOM->new( content($chapter_file) )->at('body');
 
     $dom->find('script')->map('remove');
 
